@@ -3,7 +3,7 @@ from os import path
 import sys
 
 
-class Gui:
+class View:
     def __init__(self):
         self.app = App(title="Sequins", width=1024, height=640, bg=(0, 0, 0))
         self.app.text_color = (216, 216, 216)

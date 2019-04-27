@@ -1,5 +1,8 @@
 class Pattern:
     def __init__(self):
+        self.clear()
+
+    def clear(self):
         self.frames = []
         self.next_frame()
 
