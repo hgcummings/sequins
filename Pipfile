@@ -8,6 +8,9 @@ verify_ssl = true
 [packages]
 mido = "*"
 guizero = "*"
+appdirs = "*"
+padkontrol = {git = "https://github.com/hgcummings/padkontrol",ref = "v3.0.0"}
+python-rtmidi = "*"
 
 [requires]
 python_version = "3.7"

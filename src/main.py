@@ -1,4 +1,3 @@
-from pattern import Pattern
 from view import View
 from presenter import Presenter
 
