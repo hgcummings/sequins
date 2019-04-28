@@ -1,4 +1,5 @@
 from guizero import App, Box, Combo, Text, Waffle, Window
+from guizero.utilities import convert_color
 from os import path
 import sys
 
@@ -27,8 +28,16 @@ class View:
         self.app.display()
 
     def clear(self):
+        reset_color = convert_color((32, 16, 16))
+
         for frame in self.frames:
-            frame.set_all((64, 32, 32))
+            # Setting pixels to their existing colour is quite slow (presumably because it causes a re-render)
+            # The following is significantly faster than set_all() for typical use cases
+            # To clear 64 Waffles (each 4x4), set_all takes 0.6s while the below takes ~0.1s
+            for x in range(0, 4):
+                for y in range(0, 4):
+                    if frame.get_pixel(x, y) != reset_color:
+                        frame.set_pixel(x, y, reset_color)
 
     def display_frame(self, index, frame):
         if index >= 64:
