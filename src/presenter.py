@@ -17,32 +17,40 @@ class Presenter(Thread):
         self.active_notes = 0
         self.active_frame = 0
 
+        self.view.create_menu({
+            'File': [['Configuration', self.update_config], ['Exit', self.exit]]
+        })
+
         self.input = None
         self.output = None
 
     def run(self):
         self.config.load()
-        self.ensure_valid_config()
+        self.apply_config()
 
-    def ensure_valid_config(self):
-        config_input = self.config.get_input()
-        config_output = self.config.get_output()
+    def exit(self):
+        self._close_midi_ports()
+        self.view.close()
 
-        if ((config_input.get('port') in mido.get_input_names()) and
-                (config_output.get('port') in mido.get_output_names())):
+    def update_config(self):
+        self.view.select_config(
+            self.config.get_input(), self.config.get_output(),
+            mido.get_input_names(), mido.get_output_names(),
+            self.config_updated)
+
+    def apply_config(self):
+        if ((self.config.get_input().get('port') in mido.get_input_names()) and
+                (self.config.get_output().get('port') in mido.get_output_names())):
+            self._close_midi_ports()
             self._open_midi_ports()
+            return True
         else:
-            self.view.select_config(
-                config_input, config_output,
-                mido.get_input_names(), mido.get_output_names(),
-                self.config_updated)
+            self.update_config()
+            return False
 
     def config_updated(self):
-        self.ensure_valid_config()
-        self.config.save()
-
-        self._close_midi_ports()
-        self._open_midi_ports()
+        if self.apply_config():
+            self.config.save()
 
     def _close_midi_ports(self):
         if self.input:
@@ -53,7 +61,7 @@ class Presenter(Thread):
 
     def _open_midi_ports(self):
         self.input = Input(self.config.get_input()['port'], self)
-        self.output = mido.open_output( self.config.get_output()['port'])
+        self.output = mido.open_output(self.config.get_output()['port'])
 
     def note_on(self, note, velocity):
         self.pass_through(mido.Message(type="note_on", note=MIDI_NOTES[note], velocity=velocity))

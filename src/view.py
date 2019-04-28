@@ -1,4 +1,4 @@
-from guizero import App, Box, Combo, Text, Waffle, Window
+from guizero import App, Box, Combo, MenuBar, Text, Waffle, Window
 from guizero.utilities import convert_color
 from os import path
 import sys
@@ -27,6 +27,14 @@ class View:
     def start(self):
         self.app.display()
 
+    def close(self):
+        self.app.destroy()
+
+    def create_menu(self, menu_options):
+        MenuBar(self.app,
+                toplevel=[menu for menu in menu_options.keys()],
+                options=[option for option in menu_options.values()])
+
     def clear(self):
         reset_color = convert_color((32, 16, 16))
 
@@ -47,7 +55,7 @@ class View:
             self.frames[index].set_pixel(note % 4, note // 4, (127, 32, 32))
 
     def select_config(self, config_input, config_output, available_inputs, available_outputs, callback):
-        config = Window(self.app)
+        config = Window(self.app, bg=(0,0,0), title="Sequins - Configuration")
         config.hide()
 
         def close_config():
@@ -58,26 +66,28 @@ class View:
 
         Text(config, text="Select configuration")
 
-        config_form = Box(config, layout="grid")
-        Text(config, text="Input port:", grid=[0, 0])
-
         def set_input(port):
             config_input['port'] = port
 
         def set_output(port):
             config_output['port'] = port
 
+        config_form = Box(config, layout="grid", width="fill")
+
+        Text(config_form, text="Input port:", grid=[0, 0], align="right")
         Combo(
             config_form,
             grid=[1, 0],
+            align="left",
             options=available_inputs,
             selected=config_input.get('port'),
             command=set_input)
 
-        Text(config, text="Output port:", grid=[0, 1])
+        Text(config_form, text="Output port:", grid=[0, 1], align="right")
         Combo(
             config_form,
             grid=[1, 1],
+            align="left",
             options=available_outputs,
             selected=config_output.get('port'),
             command=set_output)
