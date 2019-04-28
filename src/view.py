@@ -51,8 +51,11 @@ class View:
         if index >= 64:
             return
 
-        for note in frame.notes:
-            self.frames[index].set_pixel(note % 4, note // 4, (127, 32, 32))
+        for (pad, velocity) in enumerate(frame.velocities):
+            self.frames[index].set_pixel(
+                pad % 4,
+                pad // 4,
+                (32 if velocity == 0 else 64 + velocity * 3 // 2, 16, 16))
 
     def select_config(self, config_input, config_output, available_inputs, available_outputs, callback):
         config = Window(self.app, bg=(0,0,0), title="Sequins - Configuration")

@@ -14,7 +14,7 @@ class Presenter(Thread):
 
         self.config = UserConfig()
         self.pattern = Pattern()
-        self.active_notes = 0
+        self.active_pads = 0
         self.active_frame = 0
 
         self.view.create_menu({
@@ -63,16 +63,16 @@ class Presenter(Thread):
         self.input = Input(self.config.get_input()['port'], self)
         self.output = mido.open_output(self.config.get_output()['port'])
 
-    def note_on(self, note, velocity):
-        self.pass_through(mido.Message(type="note_on", note=MIDI_NOTES[note], velocity=velocity))
-        self.pattern.add_note(note)  # TODO: Store velocity in pattern
+    def pad_on(self, pad, velocity):
+        self.pass_through(mido.Message(type="note_on", note=MIDI_NOTES[pad], velocity=velocity))
+        self.pattern.set_velocity(pad, velocity)
         self.view.display_frame(self.active_frame, self.pattern.current_frame)
-        self.active_notes += 1
+        self.active_pads += 1
 
-    def note_off(self, note):
-        self.pass_through(mido.Message(type="note_off", note=MIDI_NOTES[note]))
-        self.active_notes -= 1
-        if self.active_notes == 0:
+    def pad_off(self, pad):
+        self.pass_through(mido.Message(type="note_off", note=MIDI_NOTES[pad]))
+        self.active_pads -= 1
+        if self.active_pads == 0:
             self.pattern.next_frame()
             self.active_frame += 1
 

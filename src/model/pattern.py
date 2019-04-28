@@ -10,10 +10,10 @@ class Pattern:
         self.current_frame = Frame()
         self.frames.append(self.current_frame)
 
-    def add_note(self, note):
-        self.current_frame.notes.append(note)
+    def set_velocity(self, pad, velocity):
+        self.current_frame.velocities[pad] = velocity
 
 
 class Frame:
     def __init__(self):
-        self.notes = []
+        self.velocities = [0] * 16
