@@ -77,6 +77,8 @@ class Presenter(Thread):
         self.pass_through(mido.Message(type="note_off", note=MIDI_NOTES[pad]))
         self.active_pads -= 1
         if self.active_pads == 0:
+            self.driver.next_frame()
+            self.view.next_frame()
             self.pattern.next_frame()
             self.active_frame += 1
 

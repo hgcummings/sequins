@@ -57,6 +57,10 @@ class View:
                 pad // 4,
                 (32 if velocity == 0 else 64 + velocity * 3 // 2, 16, 16))
 
+    def next_frame(self):
+        # No-op
+        return
+
     def select_config(self, config_input, config_output, available_inputs, available_outputs, callback):
         config = Window(self.app, bg=(0,0,0), title="Sequins - Configuration")
         config.hide()

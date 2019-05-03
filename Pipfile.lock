@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4b645569326d39d61f846694b8df14bb3bc429fd83a4e82713b3d2dee8412b1f"
+            "sha256": "699559fb354efbe5e85027517e814e0603669b31845fe38dd2a07c8e6e42478f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -78,7 +78,6 @@
         },
         "pyusb": {
             "hashes": [
-                "sha256:20a07d4b3fbb61d95ab8860c7ffda603f8d8dc356131f6f21ade17064803f061",
                 "sha256:4e9b72cc4a4205ca64fbf1f3fff39a335512166c151ad103e55c8223ac147362"
             ],
             "version": "==1.0.2"
