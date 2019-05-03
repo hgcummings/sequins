@@ -2,6 +2,8 @@ from threading import Thread
 from interface.generic import Input
 from model.pattern import Pattern
 from model.config import UserConfig
+from display.i2c_driver import I2cDriver
+
 import mido
 
 MIDI_NOTES = [41, 45, 48, 57, 42, 60, 62, 43, 37, 38, 40, 75, 49, 35, 36, 55]  # TODO: PatternConfig
@@ -11,6 +13,7 @@ class Presenter(Thread):
     def __init__(self, view):
         Thread.__init__(self)
         self.view = view
+        self.driver = I2cDriver()
 
         self.config = UserConfig()
         self.pattern = Pattern()
@@ -66,6 +69,7 @@ class Presenter(Thread):
     def pad_on(self, pad, velocity):
         self.pass_through(mido.Message(type="note_on", note=MIDI_NOTES[pad], velocity=velocity))
         self.pattern.set_velocity(pad, velocity)
+        self.driver.display_frame(self.active_frame, self.pattern.current_frame)
         self.view.display_frame(self.active_frame, self.pattern.current_frame)
         self.active_pads += 1
 
@@ -79,6 +83,7 @@ class Presenter(Thread):
     def reset(self):
         self.active_frame = 0
         self.pattern.clear()
+        self.driver.clear()
         self.view.clear()
 
     def pass_through(self, message):

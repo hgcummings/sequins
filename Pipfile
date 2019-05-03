@@ -11,6 +11,7 @@ guizero = "*"
 appdirs = "*"
 padkontrol = {git = "https://github.com/hgcummings/padkontrol",ref = "v3.0.0"}
 python-rtmidi = "*"
+pyftdi = "*"
 
 [requires]
 python_version = "3.7"

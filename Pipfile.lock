@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a6e09628f5dd8d6a145046924f7e5b34f155ed368f46d90ecdd8952524794cc1"
+            "sha256": "4b645569326d39d61f846694b8df14bb3bc429fd83a4e82713b3d2dee8412b1f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -44,6 +44,20 @@
             "git": "https://github.com/hgcummings/padkontrol",
             "ref": "4fa9f5f4dfd2d0a80be0ec305d3fa0f89b5f3001"
         },
+        "pyftdi": {
+            "hashes": [
+                "sha256:fb18fc233b9dca59a21c3322ec45b948a96c524be518b413b6c0c3baf1eac04b"
+            ],
+            "index": "pypi",
+            "version": "==0.29.4"
+        },
+        "pyserial": {
+            "hashes": [
+                "sha256:6e2d401fdee0eab996cf734e67773a0143b932772ca8b42451440cfed942c627",
+                "sha256:e0770fadba80c31013896c7e6ef703f72e7834965954a78e71a3049488d4d7d8"
+            ],
+            "version": "==3.4"
+        },
         "python-rtmidi": {
             "hashes": [
                 "sha256:171eaa08fe9b7efefbf1ff9edd9f4ace4c588e6771bf33f75f301d071ba72b20",
@@ -61,6 +75,13 @@
             ],
             "index": "pypi",
             "version": "==1.3.0"
+        },
+        "pyusb": {
+            "hashes": [
+                "sha256:20a07d4b3fbb61d95ab8860c7ffda603f8d8dc356131f6f21ade17064803f061",
+                "sha256:4e9b72cc4a4205ca64fbf1f3fff39a335512166c151ad103e55c8223ac147362"
+            ],
+            "version": "==1.0.2"
         }
     },
     "develop": {}
