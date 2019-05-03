@@ -23,6 +23,8 @@ _FRAMES_PER_COL = 1 + ((_ROW_COUNT - _FRAME_HEIGHT) // (_FRAME_HEIGHT + _FRAME_R
 _TOTAL_FRAMES = _FRAMES_PER_ROW * _FRAMES_PER_COL
 _FRAMES_PER_REGISTER = _BITS_PER_REGISTER // _FRAME_WIDTH
 
+_VELOCITY_GAMMA = [round(191 * ((((v // 4) + 1) / 32) ** 1.7)) for v in range(128)]
+
 
 class I2cDriver:
     def __init__(self):
@@ -103,7 +105,7 @@ class I2cDriver:
                     register = (_PWM_REG_OFFSET +
                                 _COL_COUNT * (y_offset + pad // _FRAME_HEIGHT) +
                                 (x_offset + pad % _FRAME_WIDTH))
-                    port.write([register, velocity], False)
+                    port.write([register, _VELOCITY_GAMMA[velocity]], False)
                     self._active_brightness_registers[matrix].append(register)
 
             self._prev_frame = None
