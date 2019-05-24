@@ -22,7 +22,6 @@ _FRAME_HEIGHT = 4
 _FRAME_ROW_SPACING = 1
 _FRAMES_PER_ROW = _PIXELS_PER_ROW * _DEVICE_COUNT // _FRAME_WIDTH
 _FRAMES_PER_COL = 1 + ((_PIXELS_PER_COL - _FRAME_HEIGHT) // (_FRAME_HEIGHT + _FRAME_ROW_SPACING))
-_FRAMES_PER_PAGE = _FRAMES_PER_ROW * _FRAMES_PER_COL
 _FRAMES_PER_REGISTER = _BITS_PER_REGISTER // _FRAME_WIDTH
 
 _VELOCITY_GAMMA = [round(191 * ((((v // 4) + 1) / 32) ** 1.7)) for v in range(128)]
@@ -32,7 +31,7 @@ class I2cDriver:
     def __init__(self):
         self.__monkey_patch_pyusb_backend()
         self._ctrl = I2cController()
-        self._ctrl.configure('ftdi://ftdi:232h/1', frequency=400000.0)
+        self._ctrl.configure('ftdi://ftdi:232h/1')
         self._led_registers = self._blank_led_registers()
         self._active_brightness_registers = [[[] for _ in range(_PAGE_COUNT)] for _ in range(_DEVICE_COUNT)]
         self._prev_frame = None
@@ -74,11 +73,12 @@ class I2cDriver:
         self.display_page(0)
 
     def display_frame(self, index, frame):
-        if index >= _FRAMES_PER_PAGE * _PAGE_COUNT:
+        if index >= _FRAMES_PER_ROW * _PAGE_COUNT * (_FRAMES_PER_COL - 1):
             return
 
-        page = index // _FRAMES_PER_PAGE
-        row = ((index // _FRAMES_PER_ROW) % _FRAMES_PER_COL)
+        line = (index // _FRAMES_PER_ROW)
+        page = 0 if line == 0 else line - 1
+        row = 0 if line == 0 else 1
         col = (index % _FRAMES_PER_ROW)
 
         self._display_frame_at(frame, page, row, col)
@@ -87,58 +87,72 @@ class I2cDriver:
 
     def _display_frame_at(self, frame, page, row, col):
         (device, port) = self._get_device_for_column(col)
-        self.display_page(page)
+
+        if page != self._current_page:
+            self.display_page(page)
 
         reg_offset = ((col % (_REGISTERS_PER_ROW * _FRAMES_PER_REGISTER)) // _FRAMES_PER_REGISTER) + (
             (_FRAMES_PER_REGISTER * (_FRAME_HEIGHT + _FRAME_ROW_SPACING) * row))
         shift = _FRAME_WIDTH * (col % _FRAMES_PER_REGISTER)
 
-        for row in range(_FRAME_HEIGHT):
-            reg_addr = reg_offset + _REGISTERS_PER_ROW * row
-            current = self._led_registers[row]
+        for led_row in range(_FRAME_HEIGHT):
+            reg_addr = reg_offset + _REGISTERS_PER_ROW * led_row
+            current = self._led_registers[led_row]
             value = current
             for col in range(_FRAME_WIDTH):
                 bit = (1 << col) << shift
-                if frame.velocities[(_FRAME_WIDTH * row) + col] > 0:
+                if frame.velocities[(_FRAME_WIDTH * led_row) + col] > 0:
                     value = value | bit
                 else:
                     value = value & ~bit
             if value != current:
                 port.write([reg_addr, value], relax=True)
-                self._led_registers[row] = value
+                self._led_registers[led_row] = value
 
     def display_page(self, page):
-        if page != self._current_page:
-            print(f'Going to page {page}')
-            self._current_page = page
-            self._led_registers = self._blank_led_registers()
-            for device in range(_DEVICE_COUNT):
-                port = self._ctrl.get_port(self._get_address_for_device(device))
-                port.write([_COMMAND_REGISTER, _FUNCTION_REGISTER], relax=False)
-                port.write([_DISPLAY_REGISTER, self._current_page], relax=False)
-                port.write([_COMMAND_REGISTER, self._current_page], relax=True)
+        print(f'Going to page {page}')
+        self._current_page = page
+        self._led_registers = self._blank_led_registers()
+        for device in range(_DEVICE_COUNT):
+            port = self._ctrl.get_port(self._get_address_for_device(device))
+            port.write([_COMMAND_REGISTER, _FUNCTION_REGISTER], relax=False)
+            port.write([_DISPLAY_REGISTER, self._current_page], relax=False)
+            port.write([_COMMAND_REGISTER, self._current_page], relax=True)
 
     def next_frame(self):
         if self._prev_frame:
             (frame, page, row, col) = self._prev_frame
 
+            (device, port) = self._get_device_for_column(col)
+
+            if row == _FRAMES_PER_COL - 1:
+                self._set_frame_velocities(frame, device, port, page + 1, col, 0)
+
+                if (col + 1) % _FRAMES_PER_REGISTER == 0:
+                    reg_offset = (col % (_REGISTERS_PER_ROW * _FRAMES_PER_REGISTER)) // _FRAMES_PER_REGISTER
+                    for led_row in range(_FRAME_HEIGHT):
+                        reg_addr = reg_offset + _REGISTERS_PER_ROW * led_row
+                        port.write([reg_addr, self._led_registers[led_row]], relax=False)
+
             if (col + 1) % _FRAMES_PER_REGISTER == 0:
                 self._led_registers = self._blank_led_registers()
 
-            (device, port) = self._get_device_for_column(col)
-
-            x_offset = _FRAME_WIDTH * (col % (_PIXELS_PER_ROW // _FRAME_WIDTH))
-            y_offset = row * (_FRAME_HEIGHT + _FRAME_ROW_SPACING)
-            for (pad, velocity) in enumerate(frame.velocities):
-                if velocity > 0:
-                    register = (_PWM_REG_OFFSET +
-                                _PIXELS_PER_ROW * (y_offset + pad // _FRAME_HEIGHT) +
-                                (x_offset + pad % _FRAME_WIDTH))
-                    port.write([register, _VELOCITY_GAMMA[velocity]], False)
-                    self._active_brightness_registers[device][self._current_page].append(register)
+            self._set_frame_velocities(frame, device, port, page, col, row)
 
             self._prev_frame = None
         return
+
+    def _set_frame_velocities(self, frame, device, port, page, col, row):
+        port.write([_COMMAND_REGISTER, page], relax=False)
+        x_offset = _FRAME_WIDTH * (col % (_PIXELS_PER_ROW // _FRAME_WIDTH))
+        y_offset = row * (_FRAME_HEIGHT + _FRAME_ROW_SPACING)
+        for (pixel, velocity) in enumerate(frame.velocities):
+            if velocity > 0:
+                register = (_PWM_REG_OFFSET +
+                            _PIXELS_PER_ROW * (y_offset + pixel // _FRAME_HEIGHT) +
+                            (x_offset + pixel % _FRAME_WIDTH))
+                port.write([register, _VELOCITY_GAMMA[velocity]], False)
+                self._active_brightness_registers[device][page].append(register)
 
     def _get_device_for_column(self, col):
         device = col // _DEVICE_COUNT

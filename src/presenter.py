@@ -66,6 +66,7 @@ class Presenter(Thread):
         self.input = Input(self.config.get_input()['port'], self)
         self.output = mido.open_output(self.config.get_output()['port'])
 
+    # TODO (pad_on, pad_off, reset): redraw view/driver on separate threads
     def pad_on(self, pad, velocity):
         self.pass_through(mido.Message(type="note_on", note=MIDI_NOTES[pad], velocity=velocity))
         self.pattern.set_velocity(pad, velocity)
@@ -82,6 +83,7 @@ class Presenter(Thread):
             self.pattern.next_frame()
             self.active_frame += 1
 
+    # TODO also call this function on exit. See http://effbot.org/zone/tkinter-window-destroy.htm
     def reset(self):
         self.active_frame = 0
         self.pattern.clear()
